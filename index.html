@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机数字翻翻卡 / Random Number Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* 按钮通用样式：包含 Comic Sans 和 楷体 */
+        button {
+            font-family: 'Comic Sans MS', 'Comic Sans', '楷体', 'STKaiti', sans-serif;
+            background-color: #d30d23;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1.5;
+            text-align: center;
+            box-shadow: 0 6px 0 #852627;
+            transition: all 0.1s ease;
+        }
+
+        button:active {
+            box-shadow: 0 2px 0 #852627;
+            transform: translateY(4px);
+        }
+
+        #next-btn {
+            background-color: #d30d23;
+            box-shadow: 0 6px 0 #852627;
+            margin-top: 30px;
+        }
+
+        #next-btn:active {
+            box-shadow: 0 2px 0 #852627;
+        }
+
+        /* 界面切换 */
+        #start-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+        }
+
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* --- 3D 翻转卡片核心样式 --- */
+        .card-container {
+            perspective: 1000px; /* 赋予 3D 空间深度感 */
+            width: 250px;
+            height: 350px;
+            margin-top: 20px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); /* 翻转动画的平滑度 */
+            transform-style: preserve-3d; /* 保持 3D 效果 */
+        }
+
+        /* 当卡片加上 .flipped 时的翻转动作 */
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden; /* 隐藏背对屏幕的那一面 */
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* 卡片正面：深灰色，等待点击 */
+        .card-front {
+            background-color: #555555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 卡片背面：显示图片 */
+        .card-back {
+            background-color: white;
+            transform: rotateY(180deg); /* 背面一开始是反过来的 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 确保图片完美填满卡片 */
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sfx-sound" src="./sound.MP3" preload="auto"></audio>
+
+    <div id="start-screen">
+        <button onclick="startGame()">
+            mula<br>start<br>开始
+        </button>
+    </div>
+
+    <div id="game-screen">
+        
+        <div class="card-container" onclick="flipCard()">
+            <div class="card" id="interactive-card">
+                <div class="card-front"></div>
+                <div class="card-back">
+                    <img id="random-image" src="" alt="数字图片">
+                </div>
+            </div>
+        </div>
+
+        <button id="next-btn" onclick="nextQuestion()">
+            soalan seterusnya<br>next question<br>下一题
+        </button>
+    </div>
+
+    <script>
+        const audio = document.getElementById('sfx-sound');
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const card = document.getElementById('interactive-card');
+        const randomImg = document.getElementById('random-image');
+        
+        let isFlipped = false; // 记录卡片当前状态，防止重复点击
+
+        // 1. 点击“开始”按钮
+        function startGame() {
+            // 针对苹果 iOS/Safari 的强制解锁音频策略：
+            // 必须在用户第一次真实点击按钮时加载音频
+            audio.load();
+
+            startScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            
+            // 准备第一题的图片（此时卡片还是深灰色）
+            setRandomImage();
+        }
+
+        // 2. 随机抽取 1 到 10 的图片
+        function setRandomImage() {
+            // 生成 1 到 10 之间的随机整数
+            const randomNum = Math.floor(Math.random() * 10) + 1;
+            // 拼接图片路径，必须与你文件夹里的名字完全一致（如 1.jpg）
+            randomImg.src = `./${randomNum}.jpg`;
+        }
+
+        // 3. 点击卡片触发翻转和声效
+        function flipCard() {
+            // 如果卡片已经翻开了，就不要再触发动画了
+            if (isFlipped) return;
+
+            // 播放声效
+            audio.currentTime = 0; 
+            audio.play().catch(e => console.log("音频播放失败:", e));
+
+            // 添加翻转的 CSS class
+            card.classList.add('flipped');
+            isFlipped = true;
+        }
+
+        // 4. 点击“下一题”重置状态
+        function nextQuestion() {
+            // 移除翻转状态，卡片会自己转回深灰色
+            card.classList.remove('flipped');
+            isFlipped = false;
+
+            // 为了不让用户在卡片转回去的途中看到下一张图，
+            // 我们稍微延迟一下再换新图片 (300毫秒)
+            setTimeout(() => {
+                setRandomImage();
+            }, 300);
+        }
+    </script>
+</body>
+</html>
